@@ -7,7 +7,8 @@ Ferme solaire:
 
 
 Station de charge:
-
+BEN DJELLOUN TOUIMI Reda
+GRABSIA Stéphane
 
 Data center:
 
