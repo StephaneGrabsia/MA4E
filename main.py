@@ -2,7 +2,8 @@
 
 # Press ⌃R to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-from microgrid.MicroGridEnv import MicroGridEnv
+
+#from microgrid.MicroGridEnv import MicroGridEnv
 from microgrid.agents.solar_farm_agent import SolarFarmAgent
 from microgrid.environments.solar_farm.solar_farm_env import SolarFarmEnv
 import numpy as np

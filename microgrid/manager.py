@@ -4,6 +4,11 @@ from collections import defaultdict
 import numpy as np
 import datetime
 
+#Ligne à changer pour chaque personne afin d'avoir le bon dossier de travail pour que le programme reconnaisse le dossier de travail. 
+import sys
+sys.path += ["D:/ENPC/1A/Cours/COUV/Optimisation et énergie/git_microgrid/MA4E"]
+
+
 from microgrid.agents.charging_station_agent import ChargingStationAgent
 from microgrid.agents.industrial_agent import IndustrialAgent
 from microgrid.agents.solar_farm_agent import SolarFarmAgent
@@ -142,7 +147,7 @@ class Manager:
 
     def update_reward(self, now: datetime.datetime, agents_data: dict):
         # TODO: update rewards based on previous rewards and agents_data
-        # you should take into account the collective consumption to determine the reward
+        #you should take into account the collective consumption to determine the reward
         total_consumption = sum([a['consumption'][0] for a in agents_data.values()])
         for name, agent in self.agents.items():
             data = agents_data[name]
@@ -226,10 +231,12 @@ if __name__ == "__main__":
             {
                 'capacity': 50,
                 'pmax': 3,
+                'pmin' : -3,
             },
             {
                 'capacity': 50,
                 'pmax': 22,
+                'pmin': -22,
             }
         ]
     }
