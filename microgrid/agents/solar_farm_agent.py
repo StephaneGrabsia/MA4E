@@ -1,3 +1,7 @@
+#import sys
+#sys.path += ["D:/ENPC/1A/Cours/COUV/Optimisation et énergie/git_microgrid/MA4E"]
+
+
 import datetime
 from microgrid.environments.solar_farm.solar_farm_env import SolarFarmEnv
 import numpy as np
@@ -7,6 +11,8 @@ class SolarFarmAgent:
     def __init__(self, env: SolarFarmEnv):
         self.env = env
 
+
+    
     def take_decision(self,
                       state,
                       previous_state=None,
@@ -19,7 +25,8 @@ class SolarFarmAgent:
         if state['soc'] + a[0] * 0.5 < 0:
             a[0] = - state['soc'] * 2
         return a
-
+    
+    """
 
     def take_decision(self,
                       state,
@@ -38,15 +45,15 @@ class SolarFarmAgent:
         prix = {}
 
         # constantes
-        T = env.nb_pdt
-        dt = env.delta_t
+        T = self.env.nb_pdt
+        dt = self.env.delta_t
 
-        charge_batterie[0] = env.battery.soc #state[soc]
-        rendement_charge = env.battery.efficiency
-        rendement_decharge = env.battery.efficiency
-        charge_max = env.battery.capacity
-        puissance_max = env.battery.pmax
-        surface = env.pv.surface
+        charge_batterie[0] = self.env.battery.soc #state[soc]
+        rendement_charge = self.env.battery.efficiency
+        rendement_decharge = self.env.battery.efficiency
+        charge_max = self.env.battery.capacity
+        puissance_max = self.env.battery.pmax
+        surface = self.env.pv.surface
 
         # on peut exploiter les données du manager et de l'environnement en terme de prévision
         prod_PV = 0.001 * surface * state['pv_prevision']
@@ -77,7 +84,7 @@ class SolarFarmAgent:
         for t in range(T):
             a[t]=conso_totale[t]
 
-        return a
+        return a"""
 
 
 if __name__ == "__main__":

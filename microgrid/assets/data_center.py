@@ -4,6 +4,9 @@ import pandas as pd
 import numpy as np
 from random import randint
 
+#import sys
+#sys.path += ["D:/ENPC/1A/Cours/COUV/Optimisation et énergie/git_microgrid/MA4E"]
+
 
 class DataCenter:
     @staticmethod

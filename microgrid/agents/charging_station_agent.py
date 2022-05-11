@@ -3,8 +3,8 @@ import pulp
 import numpy as np
 
 
-import sys
-sys.path += ["D:/ENPC/1A/Cours/COUV/Optimisation et énergie/git_microgrid/MA4E"]
+#import sys
+#sys.path += ["D:/ENPC/1A/Cours/COUV/Optimisation et énergie/git_microgrid/MA4E"]
 
 from microgrid.environments.charging_station.charging_station_env import ChargingStationEnv
 

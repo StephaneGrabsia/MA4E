@@ -12,9 +12,11 @@ sys.path += ["D:/ENPC/1A/Cours/COUV/Optimisation et énergie/git_microgrid/MA4E"
 from microgrid.agents.charging_station_agent import ChargingStationAgent
 from microgrid.agents.industrial_agent import IndustrialAgent
 from microgrid.agents.solar_farm_agent import SolarFarmAgent
+from microgrid.agents.data_center_agent import DataCenterAgent
 from microgrid.environments.charging_station.charging_station_env import ChargingStationEnv
 from microgrid.environments.industrial.industrial_env import IndustrialEnv
 from microgrid.environments.solar_farm.solar_farm_env import SolarFarmEnv
+from microgrid.environments.data_center.data_center_env import DataCenterEnv
 from matplotlib import pyplot as plt
 
 
@@ -250,10 +252,14 @@ if __name__ == "__main__":
             'site': 1,
         }
     }
+    data_center_config = {
+        'scenario': 10,
+    }
     agents = {
         'ferme': SolarFarmAgent(SolarFarmEnv(solar_farm_config=solar_farm_config, nb_pdt=N)),
         'evs': ChargingStationAgent(ChargingStationEnv(station_config=station_config, nb_pdt=N)),
         'industrie': IndustrialAgent(IndustrialEnv(industrial_config=industrial_config, nb_pdt=N)),
+        'data_center': DataCenterAgent(DataCenterEnv(data_center_config=data_center_config,nb_pdt=N))
     }
     manager = MyManager(agents,
                         delta_t=delta_t,
