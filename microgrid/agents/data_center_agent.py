@@ -16,31 +16,29 @@ class DataCenterAgent:
                       previous_action=None,
                       previous_reward=None):
 
-        lit = state['consumption_prevision']
+        l_it = state['consumption_prevision']
         lbd = state["manager_signal"]
+        p_hw = state["hotwater_price_prevision"]
 
         res = self.env.action_space.sample()
 
-        # A décommenter mais inutile pour l'instant car on n'a pas les prix p_hw(t) !!!!!
-
-        #K1 = ( self.env.COP_HP * self.env.COP_CS ) / (self.env.EER * (self.env.COP_HP - 1) )
-        #K2 = self.env.COP_CS / (self.env.EER * (self.env.COP_HP - 1) * (self.delta_t/datetime.timedelta(hours=1) ) )
-        for t in range(0,self.env.nb_pdt):
+        K1 = ( self.env.COP_HP * self.env.COP_CS ) / (self.env.EER * (self.env.COP_HP - 1) )
+        K2 = self.env.COP_CS / (self.env.EER * (self.env.COP_HP - 1) * (self.env.delta_t/datetime.timedelta(hours=1) ) )
         
-            #max_alpha = self.data_center.get_max_alpha_t(self.now + t*self.delta_t , self.delta_t)
+        for t in range(0,self.env.nb_pdt):
 
-            #if (lit[t] > 0 ): # si la demande en énergie du centre informatique n'est pas nulle à cet instant
+            if (l_it[t] > 0 ): # si la demande en énergie du centre informatique n'est pas nulle à cet instant
             
-            #    if (K1 * p_hw[t] > K2 * lbd[t] ) : # ie si on est bénéficiaire à envoyer de l'énergie thermique
-            #        res[t] = max_alpha  # on en envoie la proportion maximale
+                max_alpha = ( self.env.max_transfert * (self.env.COP_HP - 1) * self.env.EER ) / (self.env.COP_HP * self.env.COP_CS * l_it[t])
+                
+                if (K1 * p_hw[t] > K2 * lbd[t] ) : # ie si on est bénéficiaire à envoyer de l'énergie thermique
+                    res[t] = max_alpha  # on en envoie la proportion maximale
 
-            #    else:
-            #        res[t] = 0 # sinon on en envoie pas du tout
+                else:
+                    res[t] = 0 # sinon on en envoie pas du tout
 
-            #else: # si la demande en énergie est nulle on considère que l'on ne renvoie aucune énergie
-            #    res[t] = 0
-
-            res[t] = 0 # à retirer une fois le pb fixé...
+            else: # si la demande en énergie est nulle on considère que l'on ne renvoie aucune énergie
+                res[t] = 0
             
         return res
 

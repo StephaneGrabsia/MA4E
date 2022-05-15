@@ -7,7 +7,7 @@ import tqdm
 
 #Ligne à changer pour chaque personne afin d'avoir le bon dossier de travail pour que le programme reconnaisse le dossier de travail. 
 import sys
-sys.path += ["D:/ENPC/1A/Cours/COUV/Optimisation et énergie/git_microgrid/MA4E"]
+sys.path += ["C:\Dossiers\optim_et_energie\Git\MA4E"]
 
 
 from microgrid.agents.charging_station_agent import ChargingStationAgent
