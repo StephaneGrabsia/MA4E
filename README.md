@@ -9,7 +9,7 @@ Project forked from olivierjuan/MA4E
 
 Membres du groupe :
 Ferme solaire: 
-TRAN Tri-Minh
+TRAMTri-Minh
 VERDIER Valentin
 
 Station de charge:
