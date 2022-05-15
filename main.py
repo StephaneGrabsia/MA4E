@@ -4,6 +4,9 @@
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 
 #from microgrid.MicroGridEnv import MicroGridEnv
+from os import chdir
+chdir(D:/ENPC/1A/Cours/COUV/Optimisation et énergie/git_microgrid/MA4E)
+
 from microgrid.agents.solar_farm_agent import SolarFarmAgent
 from microgrid.environments.solar_farm.solar_farm_env import SolarFarmEnv
 import numpy as np

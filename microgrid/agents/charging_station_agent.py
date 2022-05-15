@@ -135,12 +135,20 @@ if __name__ == "__main__":
     N = time_horizon // delta_t
     evs_config = [
         {
-            'capacity': 50,
+            'capacity': 40,
+            'pmax': 22,
+        },
+        {
+            'capacity': 40,
+            'pmax': 22,
+        },
+        {
+            'capacity': 40,
             'pmax': 3,
             'pmin' : -3, #Ajout d'une puissance minimale pour se placer dans le cas v2g
         },
         {
-            'capacity': 50,
+            'capacity': 40,
             'pmax': 22,
             'pmin' : -22,
         }
