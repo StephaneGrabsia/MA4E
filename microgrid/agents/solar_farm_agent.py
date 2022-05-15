@@ -1,19 +1,16 @@
-#import sys
-#sys.path += ["D:/ENPC/1A/Cours/COUV/Optimisation et énergie/git_microgrid/MA4E"]
+import sys
+sys.path += ["."]
 
 
 import datetime
 from microgrid.environments.solar_farm.solar_farm_env import SolarFarmEnv
-import numpy as np
 import pulp
+import numpy as np
 
 class SolarFarmAgent:
     def __init__(self, env: SolarFarmEnv):
         self.env = env
-
-
-    
-    def take_decision(self,
+    """def take_decision(self,
                       state,
                       previous_state=None,
                       previous_action=None,
@@ -24,10 +21,7 @@ class SolarFarmAgent:
             a[0] = (self.env.battery.capacity - state['soc']) * 2
         if state['soc'] + a[0] * 0.5 < 0:
             a[0] = - state['soc'] * 2
-        return a
-    
-    """
-
+        return a"""
     def take_decision(self,
                       state,
                       previous_state=None,
@@ -40,24 +34,22 @@ class SolarFarmAgent:
         conso_batterie_pos = {}
         conso_batterie_neg = {}
         signe_conso_batterie = {}
-        prod_PV = {}
         charge_batterie = {}
-        prix = {}
-
         # constantes
         T = self.env.nb_pdt
-        dt = self.env.delta_t
+        delta_t = datetime.timedelta(minutes=30)/datetime.timedelta(minutes=60)#0.5#self.env.delta_t
 
-        charge_batterie[0] = self.env.battery.soc #state[soc]
+        charge_batterie[0] = state['soc']
         rendement_charge = self.env.battery.efficiency
         rendement_decharge = self.env.battery.efficiency
         charge_max = self.env.battery.capacity
         puissance_max = self.env.battery.pmax
         surface = self.env.pv.surface
 
-        # on peut exploiter les données du manager et de l'environnement en terme de prévision
         prod_PV = 0.001 * surface * state['pv_prevision']
         prix = state['manager_signal']
+
+        # on peut exploiter les données du manager et de l'environnement en terme de prévision
 
         for t in range(T):
             conso_totale[t] = pulp.LpVariable("conso_totale_" + str(t), None, None)
@@ -72,19 +64,18 @@ class SolarFarmAgent:
             pb += conso_batterie_pos[t] <= signe_conso_batterie[t] * puissance_max, "conso_pos_" + str(t)
             pb += conso_batterie_neg[t] <= (1 - signe_conso_batterie[t]) * puissance_max, "conso_neg_" + str(t)
             pb += conso_totale[t] == conso_batterie[t] - prod_PV[t], "conso_tot_" + str(t)
-            pb += charge_batterie[t + 1] == charge_batterie[t] + (
-                        rendement_charge * conso_batterie_pos[t] - conso_batterie_neg[t] * (
-                            1 / rendement_decharge)) * dt, "charge_batterie_" + str(t)
+            pb += charge_batterie[t + 1] == charge_batterie[t] + (self.env.battery.efficiency * conso_batterie_pos[t] - (1/self.env.battery.efficiency)*conso_batterie_neg[t])*delta_t, "charge_batterie_" + str(t)
 
         # creation de la fonction objectif
-        pb.setObjective(pulp.lpSum([conso_totale[t] * prix[t]] for t in range(T)) * dt)
+
+        pb.setObjective(pulp.lpSum([conso_totale[t] * prix[t] * delta_t for t in range(T)]))
 
         pb.solve()
         a = self.env.action_space.sample()
         for t in range(T):
-            a[t]=conso_totale[t]
+            a[t]=conso_totale[t].varValue
 
-        return a"""
+        return a
 
 
 if __name__ == "__main__":
