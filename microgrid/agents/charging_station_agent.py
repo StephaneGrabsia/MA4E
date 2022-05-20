@@ -26,7 +26,7 @@ class ChargingStationAgent:
         fined = {}
         T = self.env.nb_pdt + 1 #Nombre de périodes temporelles
         J = self.env.nb_evs + 1 #Nombre de véhicules
-
+        dt = self.env.delta_t/datetime.timedelta(hours=1)
         #Variables fixes car je ne les ai pas trouvées dans l'environnement
         daily_conso = 4. 
         fine = 5. #Lorsque la batterie est inférieure à 25%
@@ -98,7 +98,7 @@ class ChargingStationAgent:
                         lp += (a[j][el[1]] == a[j][el[0]] - daily_conso),const_name
                         #On impose qu'à l'arrivée on est la bonne relation entre les états de la batterie
                         const_name = "evolution_state_"+str(j)+'_'+str(el[1])
-                        lp += (a[j][el[1]+1] == a[j][el[1]] + self.env.evs[j-1].battery.efficiency*l[j][el[1]]*0.5), const_name
+                        lp += (a[j][el[1]+1] == a[j][el[1]] + self.env.evs[j-1].battery.efficiency*l[j][el[1]]*dt), const_name
             #On impose un état de charge initial à la première arrivée à la borne
             const_name = "initial_state_ev_"+str(j)
             lp += (a[j][t_ini[j-1]] == a_ini[j-1]), const_name
