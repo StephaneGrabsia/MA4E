@@ -56,7 +56,7 @@ class IndustrialAgent:
 
         #contraintes
 
-        prob += a[0] == a_tdec
+        #prob += a[0] == a_tdec
         
         for t in range(T):
 
@@ -65,13 +65,13 @@ class IndustrialAgent:
             prob += l_tot[t] == consumption_prevision[t] + l_bat[t]
             if t>0:
                 prob += a[t] == a[t-1] +(efficiency*l_bat_plus[t] - l_bat_moins[t]*1/efficiency)*delta_t/H
-
+            else :
+                prob += a[t] == a_tdec + (efficiency*l_bat_plus[t] - l_bat_moins[t]*1/efficiency)*delta_t/H
 
         prob.solve()
         result = self.env.action_space.sample()
         for t in range(T):
             result[t] = l_bat[t].value()
-            #print(a[t].value())
         return result
 
 
@@ -86,7 +86,6 @@ if __name__ == "__main__":
             'capacity': 100,
             'efficiency': 0.95,
             'pmax': 25,
-            #'pmin': -25,
         },
         'building': {
             'site': 1,
