@@ -1,10 +1,11 @@
+from calendar import c
 import datetime
 import pulp
 import numpy as np
 
 
-#import sys
-#sys.path += ["D:/ENPC/1A/Cours/COUV/Optimisation et énergie/git_microgrid/MA4E"]
+import sys
+sys.path += ["D:/ENPC/1A/Cours/COUV/Optimisation et énergie/git_microgrid/MA4E"]
 
 from microgrid.environments.charging_station.charging_station_env import ChargingStationEnv
 
@@ -21,7 +22,9 @@ class ChargingStationAgent:
         #Creation du problème linéaire
         lp = pulp.LpProblem("charging_station"+".lp", pulp.LpMinimize)
         lp.setSolver()
-        l = {} 
+        l_pos = {}
+        l_neg = {}
+        charging = {}
         a = {}
         fined = {}
         T = self.env.nb_pdt + 1 #Nombre de périodes temporelles
@@ -59,17 +62,25 @@ class ChargingStationAgent:
 
         #Création des variables
         for j in range(1,J):
-            l[j] = {} 
+            l_pos[j] = {}
+            l_neg[j] = {} 
             a[j] = {}
             fined[j] = {}
+            charging[j] = {}
             for (i,el) in enumerate(t_dep_arr[j-1]):
                 var_name = "fined_"+str(j)+'_'+str(i)
                 fined[j][i] = pulp.LpVariable(var_name,cat="Binary")
             for t in range(1,T):
-                var_name = "l_"+str(j)+"_"+str(t)
-                l[j][t] = pulp.LpVariable(var_name, self.env.evs[j-1].battery.pmin, self.env.evs[j-1].battery.pmax)
+                #var_name = "l_"+str(j)+"_"+str(t)
+                #l[j][t] = pulp.LpVariable(var_name, self.env.evs[j-1].battery.pmin, self.env.evs[j-1].battery.pmax)
+                var_name = "l_pos_"+str(j)+"_"+str(t)
+                l_pos[j][t] = pulp.LpVariable(var_name, 0.,self.env.evs[j-1].battery.pmax)
+                var_name = "l_neg_"+str(j)+"_"+str(t)
+                l_neg[j][t] = pulp.LpVariable(var_name,-self.env.evs[j-1].battery.pmax, 0.)
                 var_name = "a_" + str(j)+"_"+str(t)
                 a[j][t] = pulp.LpVariable(var_name,0.,self.env.evs[j-1].battery.capacity)
+                var_name = "charging_"+str(j)+"_"+str(t)
+                charging[j][t] = pulp.LpVariable(var_name,cat="Binary")
         #l[j][t] est la puissance dédiée à la voiture j au temps t
         # a[j][t] est l'état de la batterie de la voiture j au temps t
         # fined[j][i] est un booléen qui nous indique si la voiture j part avec une batterie chargée à moins de 25% de sa capacité lors du pas de temps t_dep[i]    
@@ -80,12 +91,16 @@ class ChargingStationAgent:
             #On impose à chaque pas de temps que la somme des puissances données ou récupérées 
             # des batteries soit en module inférieure à la capacité de la station.
             const_name = "charging_station_capacity_positive_"+str(t)
-            lp += pulp.lpSum([ l[j][t] for j in range(1,J)]) <= self.env.pmax_site, const_name
+            lp += pulp.lpSum([ l_pos[j][t] + l_neg[j][t] for j in range(1,J)]) <= self.env.pmax_site, const_name
             const_name = "charging_station_capacity_respected_negative_"+str(t)
-            lp += pulp.lpSum([ l[j][t] for j in range(1,J)]) >= - self.env.pmax_site, const_name
+            lp += pulp.lpSum([ l_pos[j][t] + l_neg[j][t] for j in range(1,J)]) >= - self.env.pmax_site, const_name
         for j in range(1,J):
             if t_dep_arr[j-1] != []: #S'il y a un départ pour la voiture j
                 for (i,el) in enumerate(t_dep_arr[j-1]):
+                    const_name = "pas_de_recharge_et_decharge_part1_"+str(j)+"_"+str(t)
+                    lp += l_pos[j][t] <= self.env.evs[j-1].battery.pmax*charging[j][t]
+                    const_name = "pas_de_recharge_et_decharge_part1_"+str(j)+"_"+str(t)
+                    lp += l_neg[j][t] >= -self.env.evs[j-1].battery.pmax*(1-charging[j][t])
                     const_name = "recharged_at_least_at_10_percent_ev_"+str(j)+"_"+str(i) #Comme on veut minimiser une fonction croissante en fined, cette inégalité suffit pour imposer 
                     #fined[j][i] == (a[j][el[0]] <= self.env.evs[j-1].battery.capacity*0.25)
                     lp += (a[j][el[0]]>=self.env.evs[j-1].battery.capacity*0.25*(1-fined[j][i])),const_name
@@ -98,7 +113,7 @@ class ChargingStationAgent:
                         lp += (a[j][el[1]] == a[j][el[0]] - daily_conso),const_name
                         #On impose qu'à l'arrivée on est la bonne relation entre les états de la batterie
                         const_name = "evolution_state_"+str(j)+'_'+str(el[1])
-                        lp += (a[j][el[1]+1] == a[j][el[1]] + self.env.evs[j-1].battery.efficiency*l[j][el[1]]*dt), const_name
+                        lp += (a[j][el[1]+1] == a[j][el[1]] + self.env.evs[j-1].battery.efficiency*l_pos[j][el[1]]*dt + (1/self.env.evs[j-1].battery.efficiency*l_neg[j][el[1]]*dt)), const_name
             #On impose un état de charge initial à la première arrivée à la borne
             const_name = "initial_state_ev_"+str(j)
             lp += (a[j][t_ini[j-1]] == a_ini[j-1]), const_name
@@ -108,23 +123,23 @@ class ChargingStationAgent:
                 #Si la voiture n'est pas en charge, alors on impose que la puissance échangée soit nulle
                 if not (state["is_plugged_prevision"][j-1][t-1]):
                     const_name = "away_from_charging_station_"+str(j)+"_"+str(t)
-                    lp += l[j][t]==0.,const_name
+                    lp += l_pos[j][t] - l_neg[j][t]==0.,const_name
                 #Sinon, on modifie l'état de la batterie en fonction de la puissance délivrée
                 else:
                     if t < T-1:
                         const_name = "evolution_state_"+str(j)+'_'+str(t)
-                        lp += (a[j][t+1] == a[j][t] + self.env.evs[j-1].battery.efficiency*l[j][t]*0.5), const_name
+                        lp += (a[j][t+1] == a[j][t] + self.env.evs[j-1].battery.efficiency*l_pos[j][t]*dt + (1/self.env.evs[j-1].battery.efficiency)*l_neg[j][t]*dt), const_name
             
         #On cherche à minimiser le coût, qui correspond au prix de l'électricité * la puissance échangée (achetée ou vendue) à chaque pas de temps
         #Plus les éventuelles amendes liées au départ des voitures
-        lp.setObjective(pulp.lpSum(pulp.lpSum(l[j][t] * lbd[t-1] for j in range(1,J)) for t in range(1,T)) + pulp.lpSum(pulp.lpSum(fined[j][i] for i in range(len(t_dep_arr[j-1])))for j in range(1,J)) * fine)
+        lp.setObjective(pulp.lpSum(pulp.lpSum((l_pos[j][t] + l_neg[j][t]) * lbd[t-1] for j in range(1,J)) for t in range(1,T)) + pulp.lpSum(pulp.lpSum(fined[j][i] for i in range(len(t_dep_arr[j-1])))for j in range(1,J)) * fine)
  
         #On résout et on renvoie notre action. 
         lp.solve()
         res = self.env.action_space.sample()
         for j in range(0,J-1):
             for t in range(0,T-1):
-                res[j][t] = l[j+1][t+1].varValue
+                res[j][t] = l_pos[j+1][t+1].varValue + l_neg[j+1][t+1].varValue
         #print(res)
         return(res) 
 
@@ -137,10 +152,12 @@ if __name__ == "__main__":
         {
             'capacity': 40,
             'pmax': 22,
+            'pmin' : -22,
         },
         {
             'capacity': 40,
             'pmax': 22,
+            'pmin': -22
         },
         {
             'capacity': 40,
@@ -168,6 +185,7 @@ if __name__ == "__main__":
         cumulative_reward += reward
         if done:
             break
+
         print(f"action: {action}, reward: {reward}, cumulative reward: {cumulative_reward}")
         print("State: {}".format(state))
         print("Info: {}".format(action.sum(axis=0)))
